@@ -1,36 +1,89 @@
+<div align="center">
+
 # Predictive Lead Scoring
 
-**A reproducible machine learning pipeline for prioritizing B2B marketing leads.** Built with Python and scikit-learn, this project generates an imbalanced synthetic dataset, trains a class-balanced Random Forest, and evaluates conversion predictions with metrics that matter to sales teams.
+### Turn marketing signals into a clearer sales priority.
 
-[Dataset](leads_data.csv) · [Training script](src/train_model.py) · [Confusion matrix](artifacts/confusion_matrix.png) · [Feature importance](artifacts/feature_importance_top5.png)
+A reproducible, end-to-end machine learning project for identifying B2B leads with a higher likelihood to convert.
 
-| Leads | Conversion rate | Test split | Converted F1 |
-|:--|--:|--:|--:|
-| 5,000 | 14.7% | 1,000 leads | 0.31 |
+[![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-Pipeline-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![Dataset](https://img.shields.io/badge/Leads-5%2C000-2563EB)](leads_data.csv)
+[![Positive class](https://img.shields.io/badge/Converted-14.7%25-7C3AED)](#evaluation)
 
-## Results
+[Explore the results](#evaluation) · [See the pipeline](#pipeline) · [Run the project](#run-locally)
 
-Evaluation uses a stratified 80/20 train/test split. The minority class is conversion, so its precision, recall, and F1 are highlighted below. Accuracy alone would hide how the model performs on the leads sales teams want to find.
+</div>
 
-| Class | Precision | Recall | F1-score | Test leads |
+---
+
+<table>
+<tr>
+<td align="center"><strong>5,000</strong><br><sub>SYNTHETIC LEADS</sub></td>
+<td align="center"><strong>14.7%</strong><br><sub>CONVERSION RATE</sub></td>
+<td align="center"><strong>80 / 20</strong><br><sub>STRATIFIED SPLIT</sub></td>
+<td align="center"><strong>0.31</strong><br><sub>CONVERTED F1</sub></td>
+</tr>
+</table>
+
+## Evaluation
+
+Metrics are measured on 1,000 held-out leads. With an imbalanced target, converted-lead precision, recall, and F1 give a more useful view than accuracy alone.
+
+| Outcome | Precision | Recall | F1-score | Leads |
 |:--|--:|--:|--:|--:|
-| Converted | 0.30 | 0.31 | 0.31 | 147 |
+| **Converted** | **0.30** | **0.31** | **0.31** | 147 |
 | Not converted | 0.88 | 0.87 | 0.88 | 853 |
-| **Overall accuracy** |  |  | **0.79** | **1,000** |
+| Overall accuracy | — | — | **0.79** | **1,000** |
 
-The model uses a 0.5 classification threshold. False positives can consume sales capacity on leads that do not convert; false negatives can leave potential customers untouched. Threshold selection should reflect the cost and capacity of the sales process.
+<details>
+<summary>How to read this result</summary>
+<br>
 
-### Confusion matrix
+At the default 0.5 threshold, the model finds about 31% of converting leads. False positives use sales capacity on leads that do not convert; false negatives leave potential customers untouched. The right operating threshold depends on the sales team's capacity and the business cost of each outcome.
 
-![Confusion matrix for held-out lead conversion predictions](artifacts/confusion_matrix.png)
+</details>
 
-## Approach
+<table>
+<tr>
+<td width="50%" valign="top">
+<strong>Confusion matrix</strong><br><br>
+<img src="artifacts/confusion_matrix.png" alt="Confusion matrix for held-out conversion predictions" width="100%">
+</td>
+<td width="50%" valign="top">
+<strong>Top five feature importances</strong><br><br>
+<img src="artifacts/feature_importance_top5.png" alt="Top five Random Forest feature importances" width="100%">
+</td>
+</tr>
+</table>
 
-1. **Generate data** — Create 5,000 synthetic leads with a reproducible random seed and an approximately 15% conversion rate.
-2. **Preprocess** — Median-impute and scale numeric features; most-frequent-impute and one-hot encode categories, dropping the first category.
-3. **Train** — Fit a 400-tree Random Forest with `class_weight="balanced"` on a stratified 80/20 split.
-4. **Evaluate** — Print class-level precision, recall, and F1; save a confusion matrix and top-five feature importance chart.
-5. **Serialize** — Save the complete fitted preprocessing and classifier pipeline with `joblib`.
+## Pipeline
+
+```mermaid
+flowchart LR
+    A[5,000 synthetic leads] --> B[Stratified 80/20 split]
+    B --> C[Preprocessing]
+    C --> D[Balanced Random Forest]
+    D --> E[Precision · Recall · F1]
+    D --> F[Confusion matrix]
+    D --> G[Feature importance]
+    D --> H[Serialized pipeline]
+
+    classDef source fill:#eff6ff,stroke:#3b82f6,color:#172554
+    classDef model fill:#fff7ed,stroke:#f59e0b,color:#431407
+    classDef output fill:#f5f3ff,stroke:#8b5cf6,color:#2e1065
+    class A,B source
+    class C,D model
+    class E,F,G,H output
+```
+
+| Stage | Implementation |
+|:--|:--|
+| **Numeric features** | Median imputation → standard scaling |
+| **Categorical features** | Most-frequent imputation → one-hot encoding (`drop="first"`) |
+| **Classifier** | 400-tree `RandomForestClassifier`, `class_weight="balanced"` |
+| **Reproducibility** | Fixed random seed for data generation, split, and model |
+| **Outputs** | Classification report, charts, and `joblib` pipeline |
 
 ## Data
 
@@ -39,14 +92,12 @@ The model uses a 0.5 classification threshold. False positives can consume sales
 | `Time_on_Website` | Numeric | Seconds |
 | `Email_Open_Rate` | Numeric | 0.0–1.0 |
 | `Webinar_Attendance` | Binary | 0 or 1 |
-| `Company_Size` | Categorical | Startup, Mid-Market, Enterprise |
-| `Industry` | Categorical | Tech, Healthcare, Finance, Retail |
-| `Lead_Source` | Categorical | Organic, Paid Ads, Referral |
+| `Company_Size` | Categorical | Startup · Mid-Market · Enterprise |
+| `Industry` | Categorical | Tech · Healthcare · Finance · Retail |
+| `Lead_Source` | Categorical | Organic · Paid Ads · Referral |
 | `Converted` | Target | 0 or 1 |
 
-### Most influential features
-
-![Top five Random Forest feature importances](artifacts/feature_importance_top5.png)
+### Leading signals
 
 | Feature | Importance |
 |:--|--:|
@@ -56,7 +107,7 @@ The model uses a 0.5 classification threshold. False positives can consume sales
 | Tech industry | 2.36% |
 | Paid Ads lead source | 2.29% |
 
-Importances are impurity-based and indicate model reliance, not causal effects.
+<sub>Importances are impurity-based measures of model reliance; they do not establish cause and effect.</sub>
 
 ## Run locally
 
@@ -68,9 +119,10 @@ python src/generate_data.py
 python src/train_model.py
 ```
 
-The scripts write `leads_data.csv`, the charts in `artifacts/`, and `lead_scoring_pipeline.pkl` in the project root. The serialized model is excluded from Git; regenerate it with the training command above.
+The scripts generate `leads_data.csv`, both charts under `artifacts/`, and `lead_scoring_pipeline.pkl` in the project root. The model file is excluded from Git and can be regenerated with the training command.
 
-## Project structure
+<details>
+<summary>Project structure</summary>
 
 ```text
 ├── artifacts/
@@ -84,6 +136,7 @@ The scripts write `leads_data.csv`, the charts in `artifacts/`, and `lead_scorin
 └── README.md
 ```
 
-## Limitations
+</details>
 
-The data is synthetic and the evaluation is a single holdout split. These results demonstrate an end-to-end workflow; they are not evidence of production performance. Before operational use, validate on real historical data, review subgroup behavior, and tune the decision threshold against business costs.
+> [!NOTE]
+> This project uses synthetic data and a single holdout split. It demonstrates a modeling workflow, not production performance. Validate on historical data, review subgroup behavior, and select a threshold against real business costs before operational use.
